@@ -1,12 +1,17 @@
 #include <Arduino.h>
 
 const int RED_PIN = 45;
-const int GREEN_PIN = 48;
+const int GREEN_PIN = 21;
 const int BLUE_PIN = 47;
 
 const int OUTPUT_A = 40;
 const int OUTPUT_B = 41;
 const int OUTPUT_BUTTON = 42;
+
+/*
+modeCounter: 0 = Red, 1 = Green, 2 = Blue
+*/
+int modeCounter = 0;
 
 int brightness = 0;
 int lastBrightness = -1;
@@ -35,76 +40,35 @@ void setup() {
   pinMode(OUTPUT_BUTTON, INPUT_PULLUP);
 }
 
-// void loop() {
-//   // for (int i = 0; i < 255; i += 10) {
-//   //   analogWrite(RED_PIN, i);
-//   //   delay(30);
-//   // }
-
-//   // for (int j = 255; j > 0; j -= 10) {
-//   //   analogWrite(RED_PIN, j);
-//   //   delay(30);
-//   // }
-
-//   int encoderDelta = rotaryEncoder();
-//   brightness += encoderDelta * 10;
-//   if (brightness < 0) {
-//     brightness = 0;
-//   }
-//   else if (brightness > 255) {
-//     brightness = 255;
-//   }
-
-
-//   analogWrite(RED_PIN, brightness);
-
-//   // if (brightness != lastBrightness) {
-//   //   Serial.print("Brightness: ");
-//   //   Serial.println(brightness);
-//   //   lastBrightness = brightness;
-//   // }
-
-//   // delay(1);
-
-//   currentMillis = millis();
-//   if (currentMillis - previousMillis >= 10) {
-//     previousMillis = currentMillis;
-    
-//     if (debounceButton()) {
-//     Serial.println("Button pressed!");
-//     }
-//   }
-
-  
-
-//   // if (encoderDelta != lastEncoderValue) {
-//   //   Serial.println(encoderDelta);
-//   //   lastEncoderValue = encoderDelta;
-//   // }
-
-// }
-
-
 void loop() {
+  unsigned long currentMillis = millis();
 
-    unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= 2) {
+    previousMillis = currentMillis;
 
-    if (currentMillis - previousMillis >= 2) {
+    int encoderDelta = rotaryEncoder();
 
-        previousMillis = currentMillis;
+    brightness += encoderDelta * 10;
+    brightness = constrain(brightness, 0, 255);
 
-        int encoderDelta = rotaryEncoder();
-
-        brightness += encoderDelta * 10;
-
-        brightness = constrain(brightness, 0, 255);
-
-        if (debounceButton()) {
-            Serial.println("Button pressed!");
-        }
-
-        analogWrite(RED_PIN, brightness);
+    if (debounceButton()) {
+      modeCounter = (modeCounter + 1) % 3;
+      Serial.print("Mode changed to: ");
+      Serial.println(modeCounter);
     }
+
+    switch (modeCounter) {
+      case 0:
+        analogWrite(RED_PIN, brightness);
+        break;
+      case 1:
+        analogWrite(GREEN_PIN, brightness); 
+        break;
+      case 2:
+        analogWrite(BLUE_PIN, brightness);  
+        break;
+    }
+  }
 }
 
 void setColour(int red, int green, int blue) {
